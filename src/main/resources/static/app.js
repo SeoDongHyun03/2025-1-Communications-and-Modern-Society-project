@@ -1,0 +1,294 @@
+const subjects = ["전체", "과학과창의적사고", "네트워크최신기술", "인공지능보안", "정보통신과현대생활", "정보보안기사"];
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+}
+
+// 과목 목록 가져오기
+async function fetchSubjects() {
+  const res = await fetch('/subjects');
+  return await res.json();
+}
+
+// 과목 추가
+async function addSubject(name) {
+  const res = await fetch('/subjects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  if (!res.ok) throw new Error('과목 추가 실패');
+  return await res.json();
+}
+
+// 게시글 목록/상세/작성/수정/삭제 관련 함수
+async function fetchPosts(subject = "") {
+  const url = subject && subject !== "전체" ? `/posts?subject=${encodeURIComponent(subject)}` : "/posts";
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  return await res.json();
+}
+
+async function fetchPostDetail(id) {
+  const res = await fetch(`/posts/${id}`);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+async function createPost({title, content, subject}) {
+  const res = await fetch("/posts", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({title, content, subject})
+  });
+  if (!res.ok) throw new Error("글 작성에 실패했습니다.");
+  return await res.json();
+}
+
+async function updatePost(id, {title, content, subject}) {
+  const res = await fetch(`/posts/${id}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({title, content, subject})
+  });
+  if (!res.ok) throw new Error("글 수정에 실패했습니다.");
+  return await res.json();
+}
+
+async function deletePost(id) {
+  const res = await fetch(`/posts/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("글 삭제에 실패했습니다.");
+}
+
+// 과목 필터 렌더링 (동적)
+async function renderSubjectFilter(selected = "전체") {
+  const subjects = await fetchSubjects();
+  const options = [
+    `<option value="전체" ${selected === "전체" ? "selected" : ""}>전체</option>`,
+    ...subjects.map(s => `<option value="${s.name}" ${selected === s.name ? "selected" : ""}>${s.name}</option>`)
+  ].join("");
+  return `<select id="subjectFilter" class="subject-filter">${options}</select>`;
+}
+
+// 게시글 목록 렌더링
+async function renderPostList(posts, subject = "전체") {
+  const filterHtml = await renderSubjectFilter(subject);
+  return `
+    <div style="margin-bottom:24px;">
+      ${filterHtml}
+    </div>
+    ${posts.length === 0 ? `<div style="color:#888;">게시글이 없습니다.</div>` : ""}
+    ${posts.map(post => `
+      <div class="post-card" data-id="${post.id}" style="cursor:pointer;">
+        <div class="post-title">${post.title}</div>
+        <div class="post-meta">${post.subject} | ${formatDate(post.createdAt)}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+// 게시글 목록 보여주기
+async function showPostList(selectedSubject = "전체", pushState=true) {
+  const main = document.getElementById("mainContainer");
+  if (!main) return;
+  const posts = await fetchPosts(selectedSubject);
+  main.innerHTML = await renderPostList(posts, selectedSubject);
+
+  const filter = document.getElementById("subjectFilter");
+  if (filter) {
+    filter.addEventListener("change", (e) => {
+      showPostList(e.target.value);
+    });
+  }
+
+  document.querySelectorAll(".post-card").forEach(card => {
+    card.addEventListener("click", async () => {
+      const id = card.dataset.id;
+      showPostDetail(id);
+    });
+  });
+
+  if (pushState) history.pushState({}, '', '/list');
+}
+
+// 게시글 상세 보기 + 수정/삭제/목록 버튼
+async function showPostDetail(id, pushState=true) {
+  const main = document.getElementById("mainContainer");
+  if (!main) return;
+  const post = await fetchPostDetail(id);
+  if (!post) {
+    main.innerHTML = `<div style="color:red;">게시글을 불러올 수 없습니다.</div>`;
+    return;
+  }
+  main.innerHTML = `
+  <div class="post-detail">
+    <h2>${post.post.title}</h2>
+    <div class="post-meta">${post.post.subject} | ${formatDate(post.post.createdAt)}</div>
+    <div class="post-content">${post.htmlContent}</div>
+    <button id="editBtn" class="btn">수정</button>
+    <button id="deleteBtn" class="btn" style="margin-left:8px;">삭제</button>
+    <button id="backBtn" class="btn" style="margin-left:8px;">목록으로</button>
+  </div>
+`;
+  document.getElementById("backBtn").addEventListener("click", () => showPostList());
+  document.getElementById("editBtn").addEventListener("click", () => showEditForm(post.post));
+  document.getElementById("deleteBtn").addEventListener("click", async () => {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      try {
+        await deletePost(id);
+        alert("삭제되었습니다.");
+        showPostList("전체");
+      } catch (e) {
+        alert("삭제 실패");
+      }
+    }
+  });
+  if (pushState) history.pushState({}, '', `/post/${id}`);
+}
+
+// 글쓰기 폼 렌더링
+function renderWriteForm(subjects = []) {
+  return `
+    <div class="write-form">
+      <div class="write-form-title">글 작성</div>
+      <form id="writeForm">
+        <label for="subject">과목</label>
+        <select id="subject" name="subject" required>
+          ${subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+        </select>
+        <input type="text" id="newSubjectInput" placeholder="새 과목 입력" style="width:70%;display:inline-block;">
+        <button type="button" id="addSubjectBtn" class="btn" style="margin-left:8px;">과목 추가</button>
+        <label for="title">제목</label>
+        <input type="text" id="title" name="title" required>
+        <label for="content">내용</label>
+        <textarea id="content" name="content" required></textarea>
+        <button type="submit" class="submit-btn">등록하기</button>
+      </form>
+    </div>
+  `;
+}
+
+// 글쓰기 폼 보여주기
+async function showWriteForm(pushState=true) {
+  const main = document.getElementById("mainContainer");
+  if (!main) return;
+  const subjects = await fetchSubjects();
+  main.innerHTML = renderWriteForm(subjects);
+
+  // 과목 추가 이벤트
+  document.getElementById('addSubjectBtn').onclick = async () => {
+    const input = document.getElementById('newSubjectInput');
+    const name = input.value.trim();
+    if (!name) return alert('과목명을 입력하세요.');
+    try {
+      await addSubject(name);
+      const updatedSubjects = await fetchSubjects();
+      const select = document.getElementById('subject');
+      select.innerHTML = updatedSubjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      select.value = name;
+      input.value = '';
+    } catch (e) {
+      alert('과목 추가 실패 또는 이미 존재합니다.');
+    }
+  };
+
+  document.getElementById("writeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const subject = document.getElementById("subject").value;
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+    if (!subject || !title || !content) {
+      alert("모든 항목을 입력해 주세요.");
+      return;
+    }
+    try {
+      await createPost({title, content, subject});
+      showPostList("전체");
+    } catch (err) {
+      alert("글 작성에 실패했습니다.");
+    }
+  });
+  if (pushState) history.pushState({}, '', '/write');
+}
+
+// 글 수정 폼 렌더링 및 보여주기
+async function showEditForm(post) {
+  const main = document.getElementById("mainContainer");
+  if (!main) return;
+  const subjects = await fetchSubjects();
+  main.innerHTML = `
+    <div class="write-form">
+      <div class="write-form-title">글 수정</div>
+      <form id="editForm">
+        <label for="subject">과목</label>
+        <select id="subject" name="subject" required>
+          ${subjects.map(s => `<option value="${s.name}" ${s.name === post.subject ? "selected" : ""}>${s.name}</option>`).join('')}
+        </select>
+        <label for="title">제목</label>
+        <input type="text" id="title" name="title" required value="${post.title}">
+        <label for="content">내용</label>
+        <textarea id="content" name="content" required>${post.content}</textarea>
+        <button type="submit" class="submit-btn">수정하기</button>
+        <button type="button" id="cancelEditBtn" class="btn" style="margin-left:8px;">취소</button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById("editForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const subject = document.getElementById("subject").value;
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+    try {
+      await updatePost(post.id, {title, content, subject});
+      alert("수정되었습니다.");
+      showPostDetail(post.id);
+    } catch (err) {
+      alert("수정 실패");
+    }
+  });
+
+  document.getElementById("cancelEditBtn").onclick = () => showPostDetail(post.id);
+}
+
+// SPA 라우팅 함수
+function route(path) {
+  if (path === "/write") {
+    showWriteForm(false);
+  } else if (path === "/list" || path === "/") {
+    showPostList("전체", false);
+  } else if (path.startsWith("/post/")) {
+    const id = path.split("/post/")[1];
+    showPostDetail(id, false);
+  } else {
+    showPostList("전체", false);
+  }
+}
+
+// 네비게이션 이벤트 및 초기화
+document.addEventListener("DOMContentLoaded", () => {
+  const postListLink = document.getElementById("postListLink");
+  if (postListLink) {
+    postListLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      route("/list");
+      history.pushState({}, '', '/list');
+    });
+  }
+  const writeLink = document.getElementById("writeLink");
+  if (writeLink) {
+    writeLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      route("/write");
+      history.pushState({}, '', '/write');
+    });
+  }
+  route(location.pathname);
+});
+
+// 뒤로가기/앞으로가기 대응
+window.addEventListener('popstate', () => {
+  route(location.pathname);
+});

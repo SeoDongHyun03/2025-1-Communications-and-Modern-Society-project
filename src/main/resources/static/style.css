@@ -1,0 +1,160 @@
+.btn {
+  display: inline-block;
+  padding: 8px 22px;
+  margin-right: 8px;
+  border-radius: 6px;
+  border: none;
+  background: #f1f5f9;
+  color: #222;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn:hover {
+  background: #e0e7ef;
+  color: #2563eb;
+}
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #2563eb;
+  color: #fff;
+}
+body {
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  background: #f7f9fa;
+  margin: 0;
+  padding: 0;
+}
+.blog-header {
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+.blog-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #222;
+}
+nav a {
+  margin-right: 18px;
+  color: #555;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+.write-btn {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  font-size: 1.25rem;
+  padding: 12px 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.09);
+}
+.write-btn:hover {
+  background: #388e3c;
+}
+.container {
+  max-width: 800px;
+  margin: 40px auto 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 40px 36px;
+}
+.subject-filter {
+  font-size: 1.1rem;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  margin-bottom: 30px;
+}
+.post-card {
+  background: #fafbfc;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.15s;
+}
+.post-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.post-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+.post-meta {
+  color: #888;
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+}
+/* --- 글 작성 폼 --- */
+.write-form-title {
+  font-size: 1.7rem;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #333;
+}
+.write-form label {
+  font-size: 1.18rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+  color: #222;
+}
+.write-form input[type="text"],
+.write-form select,
+.write-form textarea {
+  width: 100%;
+  font-size: 1.13rem;
+  padding: 13px 14px;
+  margin-bottom: 24px;
+  border: 1.5px solid #cfd8dc;
+  border-radius: 6px;
+  background: #f9fafb;
+  transition: border 0.2s;
+}
+.write-form textarea {
+  min-height: 220px;
+  resize: vertical;
+}
+.write-form input[type="text"]:focus,
+.write-form select:focus,
+.write-form textarea:focus {
+  border-color: #4caf50;
+  outline: none;
+}
+.write-form .submit-btn {
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  font-size: 1.2rem;
+  padding: 13px 38px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.09);
+  transition: background 0.2s;
+}
+.write-form .submit-btn:hover {
+  background: #1565c0;
+}
+/* 반응형 */
+@media (max-width: 900px) {
+  .container { padding: 20px 5vw; }
+  .blog-header { padding: 20px 5vw; }
+}
