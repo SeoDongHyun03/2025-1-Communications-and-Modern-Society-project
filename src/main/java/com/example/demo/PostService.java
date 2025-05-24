@@ -17,9 +17,7 @@ public class PostService {
     }
 
     public List<Post> findBySubject(String subject) {
-        List<Post> list = repo.findBySubject(subject);
-        list.sort(Comparator.comparing(Post::getId).reversed());
-        return list;
+        return repo.findBySubjectOrderByCreatedAtDesc(subject);
     }
 
     public List<String> findSubjects() {

@@ -1,28 +1,65 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import java.util.HashMap;
+
 @RestController
 public class PostController {
     @Autowired
     private PostRepository postRepository;
-
     @Autowired
     private UserRepository userRepository;
 
     @GetMapping("/api/posts")
-    public List<Post> getPosts() {
-        return postRepository.findAll();
+    public List<Post> getPosts(@RequestParam(required = false) String subject) {
+        if (subject != null && !subject.isEmpty()) {
+            return postRepository.findBySubjectOrderByCreatedAtDesc(subject);
+        }
+        return postRepository.findAllByOrderByCreatedAtDesc();
     }
 
     @GetMapping("/api/posts/{id}")
-    public Post getPost(@PathVariable Long id) {
-        return postRepository.findById(id).orElse(null);
+    public ResponseEntity<?> getPost(@PathVariable Long id, HttpSession session) {
+        Optional<Post> postOpt = postRepository.findById(id);
+        if (postOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("게시글을 찾을 수 없습니다.");
+        }
+        Post post = postOpt.get();
+        Long userId = (Long) session.getAttribute("userId");
+        boolean isAuthor = (userId != null && post.getAuthor().getId().equals(userId));
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", post.getId());
+        result.put("title", post.getTitle());
+        result.put("content", post.getContent());
+        result.put("subject", post.getSubject());
+        result.put("createdAt", post.getCreatedAt());
+        Map<String, Object> author = new HashMap<>();
+        author.put("id", post.getAuthor().getId());
+        author.put("username", post.getAuthor().getUsername());
+        result.put("author", author);
+        result.put("isAuthor", isAuthor); // ★ 로그인한 사용자가 작성자인지 여부
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/api/subjects")
+    public List<String> getSubjects() {
+        return postRepository.findAll().stream()
+                .map(Post::getSubject)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/api/posts")
@@ -52,6 +89,7 @@ public class PostController {
 
         try {
             post.setAuthor(userOpt.get());
+            post.setId(null); // ID를 null로 설정하여 데이터베이스가 새 ID를 생성하도록 함
             Post savedPost = postRepository.save(post);
             
             return Map.of(
