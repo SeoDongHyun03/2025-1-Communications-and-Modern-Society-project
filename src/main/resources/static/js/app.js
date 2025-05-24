@@ -6,22 +6,24 @@ function formatDate(isoString) {
   return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
 }
 
-// 과목 목록 가져오기 (문자열 배열 반환)
+// 과목 목록 가져오기
 async function fetchSubjects() {
-  const res = await fetch("/api/subjects", { credentials: 'include' });
-  if (!res.ok) return [];
-  return await res.json(); // ["과목1", "과목2", ...]
+  const res = await fetch('/api/subjects');
+  return await res.json();
 }
 
-// 과목 추가
-async function addSubject(name) {
-  const res = await fetch('/subjects', {
+// 과목 추가하기
+async function addSubject(newSubject) {
+  const res = await fetch('/api/subjects', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name })
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: newSubject})
   });
-  if (!res.ok) throw new Error('과목 추가 실패');
-  return await res.json();
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  return await res.text();
 }
 
 // 게시글 목록/상세/작성/수정/삭제 관련 함수
@@ -229,98 +231,144 @@ async function showPostDetail(id, pushState=true) {
 }
 window.showPostDetail = showPostDetail;
 
-// 글쓰기 폼 렌더링
+// 글 작성 폼
 async function showWriteForm(pushState = true) {
   const main = document.getElementById("mainContainer");
   if (!main) return;
+  let subjects = await fetchSubjects();
 
-  const subjects = await fetchSubjects();
   main.innerHTML = `
     <div class="write-form">
-      <h2>새 글 작성</h2>
-      <div id="errorMessage" style="color: red; margin-bottom: 1rem;"></div>
+      <div class="write-form-title">글 작성</div>
       <form id="writeForm">
-        <div class="form-group">
-          <label for="subject">과목</label>
-              <select id="subject" name="subject" class="form-control" required>
-                <option value="" disabled selected>과목을 선택하세요</option>
-                ${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}
-              </select>
+        <label for="subject">과목</label>
+        <div style="display:flex; gap:8px;">
+          <select id="subject" name="subject" required>
+            ${subjects.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
         </div>
-        <div class="form-group">
-          <label for="title">제목</label>
-          <input type="text" id="title" name="title" class="form-control" required>
+        <div style="margin: 8px 0;">
+            <input type="text" id="newSubjectInput" placeholder="새 과목 입력 후 추가 버튼 클릭">
+            <button type="button" id="addSubjectBtn">과목 추가</button>
         </div>
-        <div class="form-group">
-          <label for="content">내용</label>
-          <textarea id="content" name="content" class="form-control" rows="10" required></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">작성 완료</button>
-          <button type="button" class="btn btn-secondary" onclick="showPostList()">취소</button>
-        </div>
+        <label for="title">제목</label>
+        <input type="text" id="title" name="title" required>
+        <label for="content">내용</label>
+        <textarea id="content" name="content" required></textarea>
+        <button type="submit" class="submit-btn">작성하기</button>
+        <button type="button" id="cancelWriteBtn" class="btn" style="margin-left:8px;">취소</button>
+        <div id="writeError" style="color:red; margin-top:10px;"></div>
       </form>
     </div>
   `;
 
+  // 새 과목 추가 버튼 이벤트
+    document.getElementById("addSubjectBtn").onclick = async () => {
+      const newSubject = document.getElementById("newSubjectInput").value.trim();
+      if (newSubject) {
+        try {
+          await addSubject(newSubject);
+          alert("과목이 추가되었습니다.");
+          subjects = await fetchSubjects();
+          const select = document.getElementById("subject");
+          select.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+          select.value = newSubject;
+          document.getElementById("newSubjectInput").value = "";
+        } catch (e) {
+          alert(e.message);
+        }
+      } else {
+        alert("새 과목명을 입력하세요.");
+      }
+    };
+
   // 폼 제청 이벤트 리스너 추가
   document.getElementById("writeForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
+    const subject = document.getElementById("subject").value;
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
-    const subject = document.getElementById("subject").value;
-    const errorElement = document.getElementById("errorMessage");
-
+    const errorElement = document.getElementById("writeError");
     try {
-      errorElement.textContent = ''; // 이전 에러 메시지 지우기
+      errorElement.textContent = '';
       await createPost({ title, content, subject });
-      showPostList(); // 성공 시 글 목록으로 이동
+      showPostList();
     } catch (error) {
-      console.error('글 작성 오류:', error);
       errorElement.textContent = error.message || '글 작성 중 오류가 발생했습니다.';
     }
   });
+
+  document.getElementById("cancelWriteBtn").onclick = () => showPostList();
 
   if (pushState) {
     history.pushState({}, '', '/write');
   }
 }
 
-// 글 수정 폼 렌더링 및 보여주기
+// 글 수정 폼
 async function showEditForm(post) {
   const main = document.getElementById("mainContainer");
   if (!main) return;
-  const subjects = await fetchSubjects();
+  let subjects = await fetchSubjects();
+
   main.innerHTML = `
     <div class="write-form">
       <div class="write-form-title">글 수정</div>
       <form id="editForm">
         <label for="subject">과목</label>
-        <select id="subject" name="subject" required>
-          ${subjects.map(s => `<option value="${s}" ${s === post.subject ? "selected" : ""}>${s}</option>`).join('')}
-        </select>
+        <div style="display:flex; gap:8px;">
+          <select id="subject" name="subject" required>
+            ${subjects.map(s => `<option value="${s}" ${s === post.subject ? "selected" : ""}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div style="margin: 8px 0;">
+            <input type="text" id="newSubjectInput" placeholder="새 과목 입력 후 추가 버튼 클릭">
+            <button type="button" id="addSubjectBtn">과목 추가</button>
+        </div>
         <label for="title">제목</label>
         <input type="text" id="title" name="title" required value="${post.title}">
         <label for="content">내용</label>
         <textarea id="content" name="content" required>${post.content}</textarea>
         <button type="submit" class="submit-btn">수정하기</button>
         <button type="button" id="cancelEditBtn" class="btn" style="margin-left:8px;">취소</button>
+        <div id="editError" style="color:red; margin-top:10px;"></div>
       </form>
     </div>
   `;
+
+  // 새 과목 추가 버튼 이벤트
+    document.getElementById("addSubjectBtn").onclick = async () => {
+      const newSubject = document.getElementById("newSubjectInput").value.trim();
+      if (newSubject) {
+        try {
+          await addSubject(newSubject);
+          alert("과목이 추가되었습니다.");
+          subjects = await fetchSubjects();
+          const select = document.getElementById("subject");
+          select.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+          select.value = newSubject;
+          document.getElementById("newSubjectInput").value = "";
+        } catch (e) {
+          alert(e.message);
+        }
+      } else {
+        alert("새 과목명을 입력하세요.");
+      }
+    };
 
   document.getElementById("editForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const subject = document.getElementById("subject").value;
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
+    const errorElement = document.getElementById("editError");
     try {
-      await updatePost(post.id, {title, content, subject});
+      errorElement.textContent = '';
+      await updatePost(post.id, { title, content, subject });
       alert("수정되었습니다.");
       showPostDetail(post.id);
     } catch (err) {
-      alert("수정 실패");
+      errorElement.textContent = err.message || "수정 실패";
     }
   });
 

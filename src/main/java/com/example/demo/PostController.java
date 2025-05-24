@@ -55,13 +55,13 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/api/subjects")
-    public List<String> getAllSubjects() {
-        return subjectRepository.findAll()
-                .stream()
-                .map(Subject::getName)
-                .collect(Collectors.toList());
-    }
+//    @GetMapping("/api/subjects")
+//    public List<String> getAllSubjects() {
+//        return subjectRepository.findAll()
+//                .stream()
+//                .map(Subject::getName)
+//                .collect(Collectors.toList());
+//    }
 
     @PostMapping("/api/posts")
     public Map<String, Object> createPost(@RequestBody Post post, HttpSession session) {
