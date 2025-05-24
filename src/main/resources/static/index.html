@@ -2,22 +2,30 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나의 블로그</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR:400,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <header class="blog-header">
-    <a href="/" class="logo" id="home-link">나의 블로그</a>
-    <nav>
-        <a href="/list" id="postListLink" class="btn">글 목록</a>
-        <a href="/write" id="writeLink" class="btn btn-primary">글 작성</a>
-    </nav>
+    <div class="header-container">
+        <a href="/" class="logo" id="home-link">나의 블로그</a>
+        <nav class="main-nav">
+            <a href="/list" id="postListLink" class="nav-link">글 목록</a>
+            <a href="/write" id="writeLink" class="nav-link">글 작성</a>
+            <div class="auth-buttons">
+                <a href="/login.html" class="btn btn-login">로그인</a>
+                <a href="/register.html" class="btn btn-register">회원가입</a>
+            </div>
+        </nav>
+    </div>
 </header>
-<div class="container" id="mainContainer">
 
+<div class="container" id="mainContainer">
+    <!-- 메인 콘텐츠 영역 -->
 </div>
-<script src="app.js"></script>
+
+<script src="/js/app.js"></script>
 </body>
 </html>

@@ -292,3 +292,37 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener('popstate', () => {
   route(location.pathname);
 });
+
+document.getElementById('loginForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  const res = await fetch('/api/login', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if (data.username) {
+    closeLoginModal();
+    location.reload();
+  } else {
+    document.getElementById('loginError').innerText = data.error || "로그인 실패";
+  }
+};
+
+document.getElementById('registerForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const username = document.getElementById('registerUsername').value.trim();
+  const password = document.getElementById('registerPassword').value.trim();
+  const res = await fetch('/api/register', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if (data.result === "ok") {
+    closeRegisterModal();
+    alert("회원가입 성공! 로그인 해주세요.");
+  } else {
+    document.getElementById('registerError').innerText = data.error || "회원가입 실패";
+  }
+};

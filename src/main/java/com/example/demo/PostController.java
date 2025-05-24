@@ -1,75 +1,108 @@
 package com.example.demo;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 public class PostController {
-    private final PostService postService;
-    private final MarkdownService markdownService;
-    private final SubjectRepository subjectRepository; // 추가
+    @Autowired
+    private PostRepository postRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
-    public PostController(PostService postService, MarkdownService markdownService, SubjectRepository subjectRepository) {
-        this.postService = postService;
-        this.markdownService = markdownService;
-        this.subjectRepository = subjectRepository; // 추가
+    @GetMapping("/api/posts")
+    public List<Post> getPosts() {
+        return postRepository.findAll();
     }
 
-    @GetMapping("/posts")
-    public List<Post> list(@RequestParam(required = false) String subject) {
-        if(subject != null && !subject.isEmpty()) return postService.findBySubject(subject);
-        return postService.findAll();
+    @GetMapping("/api/posts/{id}")
+    public Post getPost(@PathVariable Long id) {
+        return postRepository.findById(id).orElse(null);
     }
 
-    @GetMapping("/posts/{id}")
-    public PostDetailResponse detail(@PathVariable Long id) {
-        Post post = postService.findById(id);
-        String html = markdownService.toHtml(post.getContent());
-        return new PostDetailResponse(post, html);
-    }
-
-    @PostMapping("/posts")
-    public Post create(@RequestBody PostCreateRequest req) {
-        return postService.save(req.getTitle(), req.getContent(), req.getSubject());
-    }
-
-    @PutMapping("/posts/{id}")
-    public Post update(@PathVariable Long id, @RequestBody PostCreateRequest req) {
-        return postService.update(id, req.getTitle(), req.getContent(), req.getSubject());
-    }
-
-    @DeleteMapping("/posts/{id}")
-    public void delete(@PathVariable Long id) { postService.delete(id); }
-
-    @GetMapping("/subjects/names")
-    public List<String> getSubjectNames() {
-        return subjectRepository.findAll().stream()
-                .map(Subject::getName)
-                .toList();
-    }
-
-    public static class PostCreateRequest {
-        private String title, content, subject;
-        public String getTitle() { return title; }
-
-        public void setTitle(String title) { this.title = title; }
-
-        public String getContent() { return content; }
-
-        public void setContent(String content) { this.content = content; }
-
-        public String getSubject() { return subject; }
-
-        public void setSubject(String subject) { this.subject = subject; }
-    }
-    public static class PostDetailResponse {
-        private Post post; private String htmlContent;
-        public PostDetailResponse(Post post, String htmlContent) {
-            this.post = post; this.htmlContent = htmlContent;
+    @PostMapping("/api/posts")
+    public Map<String, Object> createPost(@RequestBody Post post, HttpSession session) {
+        // 로그인 확인
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return Map.of("error", "로그인이 필요합니다.");
         }
+        
+        // 사용자 정보 가져오기
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return Map.of("error", "사용자 정보를 찾을 수 없습니다.");
+        }
+        
+        post.setAuthor(userOpt.get());
+        Post savedPost = postRepository.save(post);
+        return Map.of(
+            "id", savedPost.getId(),
+            "title", savedPost.getTitle(),
+            "content", savedPost.getContent(),
+            "author", savedPost.getAuthor().getUsername()
+        );
+    }
 
-        public Post getPost() { return post; }
+    @PutMapping("/api/posts/{id}")
+    public Map<String, Object> updatePost(
+            @PathVariable Long id, 
+            @RequestBody Post updatedPost,
+            HttpSession session) {
+        // 로그인 확인
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return Map.of("error", "로그인이 필요합니다.");
+        }
+        
+        // 게시글 존재 여부 확인
+        Optional<Post> postOpt = postRepository.findById(id);
+        if (postOpt.isEmpty()) {
+            return Map.of("error", "게시글을 찾을 수 없습니다.");
+        }
+        
+        Post post = postOpt.get();
+        
+        // 작성자 확인
+        if (!post.getAuthor().getId().equals(userId)) {
+            return Map.of("error", "권한이 없습니다.");
+        }
+        
+        // 게시글 업데이트
+        post.setTitle(updatedPost.getTitle());
+        post.setContent(updatedPost.getContent());
+        postRepository.save(post);
+        
+        return Map.of("message", "게시글이 수정되었습니다.");
+    }
 
-        public String getHtmlContent() { return htmlContent; }
+    @DeleteMapping("/api/posts/{id}")
+    public Map<String, Object> deletePost(@PathVariable Long id, HttpSession session) {
+        // 로그인 확인
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return Map.of("error", "로그인이 필요합니다.");
+        }
+        
+        // 게시글 존재 여부 확인
+        Optional<Post> postOpt = postRepository.findById(id);
+        if (postOpt.isEmpty()) {
+            return Map.of("error", "게시글을 찾을 수 없습니다.");
+        }
+        
+        Post post = postOpt.get();
+        
+        // 작성자 확인
+        if (!post.getAuthor().getId().equals(userId)) {
+            return Map.of("error", "권한이 없습니다.");
+        }
+        
+        postRepository.delete(post);
+        return Map.of("message", "게시글이 삭제되었습니다.");
     }
 }

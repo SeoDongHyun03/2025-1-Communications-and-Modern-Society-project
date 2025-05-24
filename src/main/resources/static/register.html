@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 나의 블로그</title>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .register-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-submit {
+            background-color: #28a745;
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+            background-color: #218838;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<header class="blog-header">
+    <div class="header-container">
+        <a href="/" class="logo">나의 블로그</a>
+        <nav class="main-nav">
+            <a href="/register.html" class="nav-link active">회원가입</a>
+        </nav>
+    </div>
+</header>
+
+<div class="register-container">
+    <h1>회원가입</h1>
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="username">아이디</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="confirmPassword">비밀번호 확인</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">가입하기</button>
+        </div>
+        <div class="login-link">
+            이미 회원이신가요? <a href="/login.html">로그인하기</a>
+        </div>
+    </form>
+</div>
+
+<script src="/js/auth.js"></script>
+</body>
+</html>

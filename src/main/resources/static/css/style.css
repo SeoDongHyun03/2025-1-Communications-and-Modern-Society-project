@@ -158,3 +158,120 @@ nav a {
   .container { padding: 20px 5vw; }
   .blog-header { padding: 20px 5vw; }
 }
+
+/* 기본 스타일 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* 헤더 스타일 */
+.blog-header {
+    background-color: #343a40;
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between; /* 이 부분이 양쪽 정렬을 담당합니다 */
+    align-items: center;
+}
+
+.logo {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-right: auto; /* 로고를 왼쪽으로 밀어줍니다 */
+}
+
+
+/* 네비게이션 스타일 */
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-left: auto; /* 네비게이션을 오른쪽으로 밀어줍니다 */
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #fff;
+}
+
+/* 버튼 공통 스타일 */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+/* 로그인 버튼 스타일 */
+.btn-login {
+    background-color: transparent;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+.btn-login:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 회원가입 버튼 스타일 */
+.btn-register {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-register:hover {
+    background-color: #0056b3;
+}
+
+/* 컨테이너 스타일 */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* 반응형 디자인에서도 레이아웃이 깨지지 않도록 수정 */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: row; /* 모바일에서도 가로 정렬 유지 */
+        padding: 1rem;
+    }
+
+    .main-nav {
+        width: auto; /* 너비 자동 조정 */
+        margin-left: auto; /* 오른쪽 정렬 유지 */
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+}
