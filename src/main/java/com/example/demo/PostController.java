@@ -21,6 +21,9 @@ public class PostController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SubjectRepository subjectRepository;
+
     @GetMapping("/api/posts")
     public List<Post> getPosts(@RequestParam(required = false) String subject) {
         if (subject != null && !subject.isEmpty()) {
@@ -53,12 +56,10 @@ public class PostController {
     }
 
     @GetMapping("/api/subjects")
-    public List<String> getSubjects() {
-        return postRepository.findAll().stream()
-                .map(Post::getSubject)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isEmpty())
-                .distinct()
+    public List<String> getAllSubjects() {
+        return subjectRepository.findAll()
+                .stream()
+                .map(Subject::getName)
                 .collect(Collectors.toList());
     }
 
