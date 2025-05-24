@@ -38,12 +38,19 @@ async function fetchPostDetail(id) {
 }
 
 async function createPost({title, content, subject}) {
-  const res = await fetch("/posts", {
+  const res = await fetch("/api/posts", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: {
+      "Content-Type": "application/json"
+    },
+    credentials: 'include',
     body: JSON.stringify({title, content, subject})
   });
-  if (!res.ok) throw new Error("글 작성에 실패했습니다.");
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "글 작성에 실패했습니다.");
+  }
   return await res.json();
 }
 
@@ -149,68 +156,61 @@ async function showPostDetail(id, pushState=true) {
 }
 
 // 글쓰기 폼 렌더링
-function renderWriteForm(subjects = []) {
-  return `
+async function showWriteForm(pushState = true) {
+  const main = document.getElementById("mainContainer");
+  if (!main) return;
+
+  const subjects = await fetchSubjects();
+  main.innerHTML = `
     <div class="write-form">
-      <div class="write-form-title">글 작성</div>
+      <h2>새 글 작성</h2>
+      <div id="errorMessage" style="color: red; margin-bottom: 1rem;"></div>
       <form id="writeForm">
-        <label for="subject">과목</label>
-        <select id="subject" name="subject" required>
-          ${subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-        </select>
-        <input type="text" id="newSubjectInput" placeholder="새 과목 입력" style="width:70%;display:inline-block;">
-        <button type="button" id="addSubjectBtn" class="btn" style="margin-left:8px;">과목 추가</button>
-        <label for="title">제목</label>
-        <input type="text" id="title" name="title" required>
-        <label for="content">내용</label>
-        <textarea id="content" name="content" required></textarea>
-        <button type="submit" class="submit-btn">등록하기</button>
+        <div class="form-group">
+          <label for="subject">과목</label>
+          <select id="subject" name="subject" class="form-control" required>
+            <option value="" disabled selected>과목을 선택하세요</option>
+            ${subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="title">제목</label>
+          <input type="text" id="title" name="title" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="content">내용</label>
+          <textarea id="content" name="content" class="form-control" rows="10" required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">작성 완료</button>
+          <button type="button" class="btn btn-secondary" onclick="showPostList()">취소</button>
+        </div>
       </form>
     </div>
   `;
-}
 
-// 글쓰기 폼 보여주기
-async function showWriteForm(pushState=true) {
-  const main = document.getElementById("mainContainer");
-  if (!main) return;
-  const subjects = await fetchSubjects();
-  main.innerHTML = renderWriteForm(subjects);
-
-  // 과목 추가 이벤트
-  document.getElementById('addSubjectBtn').onclick = async () => {
-    const input = document.getElementById('newSubjectInput');
-    const name = input.value.trim();
-    if (!name) return alert('과목명을 입력하세요.');
-    try {
-      await addSubject(name);
-      const updatedSubjects = await fetchSubjects();
-      const select = document.getElementById('subject');
-      select.innerHTML = updatedSubjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-      select.value = name;
-      input.value = '';
-    } catch (e) {
-      alert('과목 추가 실패 또는 이미 존재합니다.');
-    }
-  };
-
+  // 폼 제청 이벤트 리스너 추가
   document.getElementById("writeForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const subject = document.getElementById("subject").value;
+
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
-    if (!subject || !title || !content) {
-      alert("모든 항목을 입력해 주세요.");
-      return;
-    }
+    const subject = document.getElementById("subject").value;
+    const errorElement = document.getElementById("errorMessage");
+
     try {
-      await createPost({title, content, subject});
-      showPostList("전체");
-    } catch (err) {
-      alert("글 작성에 실패했습니다.");
+      errorElement.textContent = ''; // 이전 에러 메시지 지우기
+      await createPost({ title, content, subject });
+      showPostList(); // 성공 시 글 목록으로 이동
+    } catch (error) {
+      console.error('글 작성 오류:', error);
+      errorElement.textContent = error.message || '글 작성 중 오류가 발생했습니다.';
     }
   });
-  if (pushState) history.pushState({}, '', '/write');
+
+  if (pushState) {
+    history.pushState({}, '', '/write');
+  }
 }
 
 // 글 수정 폼 렌더링 및 보여주기
