@@ -24,6 +24,9 @@ public class PostController {
     @Autowired
     private SubjectRepository subjectRepository;
 
+    @Autowired
+    private MarkdownService markdownService;
+
     @GetMapping("/api/posts")
     public List<Post> getPosts(@RequestParam(required = false) String subject) {
         if (subject != null && !subject.isEmpty()) {

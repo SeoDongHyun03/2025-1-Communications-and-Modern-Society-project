@@ -19,7 +19,18 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// CommonMark 핵심 라이브러리
 	implementation 'org.commonmark:commonmark:0.21.0'
+
+	// GFM 테이블 확장
+	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.21.0'
+
+	// GFM 취소선 확장
+	implementation 'org.commonmark:commonmark-ext-gfm-strikethrough:0.21.0'
+
+	// 기타 유용한 확장들 (선택사항)
+	implementation 'org.commonmark:commonmark-ext-autolink:0.21.0'
+	implementation 'org.commonmark:commonmark-ext-heading-anchor:0.21.0'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.h2database:h2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

@@ -168,6 +168,25 @@ async function showPostList(selectedSubject = "전체", pushState = true) {
   }
 }
 
+// 마크다운을 HTML로 변환하는 함수
+function renderMarkdown(content) {
+    if (!content) return '';
+
+    // marked 라이브러리 설정
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (Prism.languages[lang]) {
+                return Prism.highlight(code, Prism.languages[lang], lang);
+            }
+            return code;
+        },
+        breaks: true,
+        gfm: true
+    });
+
+    return marked.parse(content);
+}
+
 // 게시글 상세 보기 + 수정/삭제/목록 버튼
 async function showPostDetail(id, pushState=true) {
   const main = document.getElementById("mainContainer");
@@ -188,13 +207,14 @@ async function showPostDetail(id, pushState=true) {
     const authorName = post.author?.username || "알 수 없음";
     const isAuthor = post.isAuthor; // ← 백엔드에서 내려준 값 사용
 
-    const htmlContent = marked.parse(content);
+//    const htmlContent = marked.parse(content);
+    const contentHtml = renderMarkdown(post.content); // 마크다운 변환
 
     main.innerHTML = `
     <div class="post-detail">
       <h2>${title}</h2>
       <div class="post-meta">${subject} | ${formatDate(createdAt)} | 작성자: ${authorName}</div>
-      <div class="post-content">${htmlContent}</div>
+      <div class="post-content">${contentHtml}</div>
       <button id="editBtn" class="btn">수정</button>
       <button id="deleteBtn" class="btn" style="margin-left:8px;">삭제</button>
       <button id="backBtn" class="btn" style="margin-left:8px;">목록으로</button>
